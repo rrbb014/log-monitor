@@ -1,0 +1,14 @@
+# Store file offsets
+offset_path:  /home/rrbb/code/test/gauss_keeker/offsets
+
+inputs:
+    - type: predpipe
+      paths:
+          - /home/rrbb/code/test/gauss_keeker/predlog_*.log
+#     - type: confsync
+#       paths:
+#           - /shared/conf_sync*.log
+
+outputs:
+    - type: file
+      path: /home/rrbb/code/test/gauss_keeker/outputs
