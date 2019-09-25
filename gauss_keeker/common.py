@@ -16,4 +16,3 @@ class RegexRepository:
             # TODO: To handling multi-line log, it may be deleted
             _dict = dict(message=string)
             return _dict
-
