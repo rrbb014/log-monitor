@@ -4,6 +4,8 @@ import re
 class RegexRepository:
 
     def string_to_dict(self, string, pattern):
+        # Thanks to url:
+        # https://stackoverflow.com/questions/11844986/convert-or-unformat-a-string-to-variables-like-format-but-in-reverse-in-p/11849360#11849360
         try:
             regex = re.sub(r'{(.+?)}', r'(?P<_\1>.+)', pattern)
             values = list(re.search(regex, string).groups())
