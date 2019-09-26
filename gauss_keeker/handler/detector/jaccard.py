@@ -1,6 +1,5 @@
 class JaccardSimilarityBasedDetector:
     def measure(self, sentence1, sentence2):
-        # TODO do something
         sentence1_words = set(sentence1.split())
         sentence2_words = set(sentence2.split())
         

@@ -1,0 +1,38 @@
+# EVENT_LABEL:
+#   description: blahblah
+#   pattern: "{abc} - {def}"
+
+INITIALIZE|start_logger:
+    description: "initialize logger"
+    pattern: "start logger"
+
+INITIALIZE|print_args:
+    description: "print out arguments when execute script"
+    pattern: "argument "
+
+INITIALIZE|try_connect_zk:
+    description: "try to connect to Zookeeper"
+
+INITIALIZE|zk_connected:
+    description: "Connection with Zookeeper established"
+
+INITIALIZE|choose_pipeline_conf:
+    description: "Choose pipeline config json file"
+
+INITIALIZE|initialize_hdfsclient: 
+    description: "initialize hdfs client"
+
+INITIALIZE|make_hdfs_output_dir:
+    description: "make hdfs output directory"
+
+INITIALIZE|connect_kafka: 
+    description: "connect to kafka topic"
+
+INITIALIZE|update_process_component:
+    description: "update processing component"
+
+EMPTYDATA: 
+    description: "empty data from kafka topic"
+
+READ|reading_kafka_msg:
+    description: "reading kafka message"

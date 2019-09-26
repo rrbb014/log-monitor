@@ -8,21 +8,6 @@ class EventClassifier:
     TODO Long-term: can be done by LDA model
 
     event_label list:
-    INITIALIZE:start_logger -- initialize logger
-    INITIALIZE:print_args -- print out arguments when execute script 
-    INITIALIZE:try_connect_zk -- try to connect to Zookeeper
-    INITIALIZE:zk_connected -- Connection with Zookeeper established
-    INITIALIZE:choose_pipeline_conf -- Choose pipeline config json file
-    INITIALIZE:initialize_hdfsclient -- initialize hdfs client
-    INITIALIZE:make_hdfs_output_dir -- make hdfs output directory
-    INITIALIZE:connect_kafka -- connect to kafka topic
-    INITIALIZE:update_process_component -- update processing component
-
-    EMPTY_DATA -- empty data from kafka topic
-
-    READ:reading_kafka_msg -- reading kafka message
-
-    SKIP -- skippable logs
     """
     def __init__(self):
         self.event_list = [
