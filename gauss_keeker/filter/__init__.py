@@ -6,7 +6,7 @@ from glob import glob
 
 class FilterManager:
     def __init__(self):
-        self.filter_dict = {}
+        self._filter_dict = {}
         target_path = os.path.join(os.path.dirname(__file__),'*.yml')
         filter_files = glob(target_path)
         for f in filter_files:
@@ -14,12 +14,12 @@ class FilterManager:
             with open(f) as reader:
                 temp_dict = yaml.safe_load(reader)
 
-            self.filter_dict[filter_name] = temp_dict
+            self._filter_dict[filter_name] = temp_dict
 
     @property
     def predpipe(self):
-        return self.filter_dict.get('predpipe')
+        return self._filter_dict.get('predpipe')
 
     @property
     def confsync(self):
-        return self.filter_dict.get('confsync')
+        return self._filter_dict.get('confsync')
