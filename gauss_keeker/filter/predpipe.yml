@@ -1,38 +1,71 @@
-# EVENT_LABEL:
+# EVENT_LABEL-SUB_LABEL:
 #   description: blahblah
 #   pattern: "{abc} - {def}"
 
-INITIALIZE|start_logger:
+INIT-start_logger:
     description: "initialize logger"
-    pattern: "start logger"
+    pattern: 
+      - "start logging"
 
-INITIALIZE|print_args:
+INIT-print_args:
     description: "print out arguments when execute script"
-    pattern: "argument "
+    pattern: 
+      - "argument [{args_list}]"
 
-INITIALIZE|try_connect_zk:
+INIT-try_connect_zk:
     description: "try to connect to Zookeeper"
 
-INITIALIZE|zk_connected:
+INIT-zk_connected:
     description: "Connection with Zookeeper established"
 
-INITIALIZE|choose_pipeline_conf:
-    description: "Choose pipeline config json file"
+INIT-choose_pipeline_conf:
+    description: "not yet"
 
-INITIALIZE|initialize_hdfsclient: 
+INIT-initialize_hdfsclient: 
     description: "initialize hdfs client"
 
-INITIALIZE|make_hdfs_output_dir:
+INIT-make_hdfs_output_dir:
     description: "make hdfs output directory"
 
-INITIALIZE|connect_kafka: 
-    description: "connect to kafka topic"
+INIT-connect_kafka: 
+    description: "connecting to kafka topic"
+    pattern: 
+      - "connecting to topic {kafka_topic} with config {config} pipeline_id:{pipeline_id}"
 
-INITIALIZE|update_process_component:
+INIT-update_component:
     description: "update processing component"
+    pattern: 
+      - "updating processing components with max-latency {max_latency} pipeline_id:{pipeline_id}"
 
 EMPTYDATA: 
     description: "empty data from kafka topic"
+    pattern: 
+      - "empty data or no data pipeline_id:{pipeline_id}"
 
-READ|reading_kafka_msg:
+READ-reading_kafka_msg:
     description: "reading kafka message"
+
+CLOSE-clean_up:
+    description: "client clean up"
+    pattern: 
+      - "gracefully cleaning up pipeline_id:{pipeline_id}"
+
+RESTART:
+    description: "ready to exit and restart"
+    pattern: 
+      - "all services are closed. Ready to exit and restart. pipeline_id:{pipeline_id}"
+
+TIMEOUT-no_data:
+    description: "TimeoutError from process.py"
+    pattern:
+        - "more than {timeout} minutes without data pipeline_id:{pipeline_id}"
+ERROR:
+    description: "error situation"
+    pattern: 
+      - "error in prediction engine {traceback}"
+
+SKIP:
+    description: "skippable log event"
+    pattern:
+      - "closing reader"
+      - "closing output sink"
