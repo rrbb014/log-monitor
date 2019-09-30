@@ -24,9 +24,11 @@ class Keeker:
     def set_components(self):
         self.sensor = ChangeSensor(self.target_file, self.offset_root, LOGGER) 
         if self.handler_type == 'predpipe':
-            self.handler = PredPipeHandler()
+            self.filter = FilterManager().predpipe
+            self.handler = PredPipeHandler(self.filter)
         elif self.handler_type == 'confsync':
-            self.handler = ConfSyncHandler()
+            self.filter = FilterManager().confsync
+            self.handler = ConfSyncHandler(self.filter)
 
         # TODO: Set Spooler
 
