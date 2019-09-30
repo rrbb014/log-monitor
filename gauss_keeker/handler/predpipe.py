@@ -7,29 +7,10 @@ class EventClassifier:
     Read text and classify event_label
     TODO Long-term: can be done by LDA model
 
-    event_label list:
     """
     def __init__(self):
-        self.event_list = [
-                'EMPTY_DATA',
-                'INITIALIZE:start_logger',
-                'INTIIALIZE:print_args',
-                'INITIALIZE:try_connect_zk',
-                'INITIALIZE:zk_connected',
-                'INITIALIZE:choose_pipeline_conf',
-                'INITIALIZE:initialize_hdfsclient',
-                'INITIALIZE:make_hdfs_output_dir',
-                'INITIALIZE:connect_kafka',
-                'INITIALIZE:update_process_component',
-                'READ:reading_kafka_msg',
-                'SKIP',
-            ]
         pass
     
-    def _abstract_initialize_event(self, text):
-        INITIALIZE_START_LOGGER_RULE = "start logger"
-        # TODO define more rule
-
 
     def classify(self, text: str) -> str:
         # TODO Do something
@@ -39,9 +20,10 @@ class EventClassifier:
 
 class PredPipeHandler(Handler):
 
-    def __init__(self):
+    def __init__(self, _filter: dict):
         self._regex_repo = RegexRepository()
-
+        self._filter = _filter
+        self.event_list = list(self._filter.keys())
 
     def _parse(self, text) -> dict:
         """
@@ -63,14 +45,41 @@ class PredPipeHandler(Handler):
             'message': "choosing ./shared/confAT0221-sixteen-jupiter-glucose-eight12.json among ['/shared/confAT0221-sixteen-jupiter-glucose-eight12.json']"
         }
         """
-        log_format = "{asctime} - {levelname} - {filename} - {lineno} - {message}"
+        log_format = self._regex_repo.log_format
         parse_dict = self._regex_repo.string_to_dict(text, log_format)
         return parse_dict
 
-    def _classify(self, message):
+    def _classify(self, message) -> str :
         """ Classify log event to some Category"""
-        
-        pass
+        matched_list = []
+        for event in self.event_list:
+            temp_list = []
+            patterns = self._filter.get(event)['pattern']
+            assert type(patterns) == list
+
+            for fmt in patterns:
+                parsed = self._regex_repo.string_to_dict(message, fmt, match_check=True)
+                sub_matched = parsed.get('matched', False)
+                temp_list.append(sub_matched)
+
+            matched = any(temp_list)
+            matched_list.append(matched)
+
+        # For handling exceptional case(2 more matched event label)
+        cnt = 0
+        event_label = []
+        for event, matched in zip(self.event_list, matched_list):
+            if matched:
+                event_label.append(event)
+                cnt += 1
+
+        if cnt == 1:
+            return event_label[0]
+        elif cnt > 1:
+            print(event_label)
+            raise Exception("2 more matched event label. labels: %s" % ' '.join(event_label))
+        else:
+            raise Exception("No matched label. Check filter pattern. message: %s" % message)
 
     def handle(self, text):
         parse_dict = self._parse(text)
