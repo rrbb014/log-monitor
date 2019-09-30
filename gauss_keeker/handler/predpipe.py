@@ -2,21 +2,6 @@
 from gauss_keeker.common import RegexRepository
 from .handler import Handler
 
-class EventClassifier:
-    """
-    Read text and classify event_label
-    TODO Long-term: can be done by LDA model
-
-    """
-    def __init__(self):
-        pass
-    
-
-    def classify(self, text: str) -> str:
-        # TODO Do something
-
-        return event_label
-
 
 class PredPipeHandler(Handler):
 
