@@ -67,7 +67,6 @@ class ChangeSensor:
 
         self._reader.seek(self.offset)
         text = self._reader.readline().strip()
-        self.logger.debug('text : %s' % text)
         next_offset = self._reader.tell()
 
         # For detecting whether multi-line message
@@ -83,9 +82,13 @@ class ChangeSensor:
                 self._reader.seek(self.offset)
                 break
             else:
-                text += '\n'+next_text
+                # TODO; Cannot parse multi line error logs using regex.
+                # Let's replace from '\n' to '>>'
+                self.logger.debug("doesn't matched with log_format %s" % next_text)
+                text += '>>'+next_text
                 next_offset = next_next_offset
 
+        self.logger.debug('text : %s' % text)
         return text, next_offset
     
     def commit(self, offset):
