@@ -1,14 +1,17 @@
-# Store file offsets
-offset_path:  /home/rrbb/code/tmp/gauss_keeker/offsets
+# Path for store offsets
+offset_path:  /home/rrbb/code/tmp/.keeker/offsets
+
+# Path for store status
+status_path: /home/rrbb/code/tmp/.keeker/status
 
 inputs:
     - type: predpipe
       paths:
-          - /home/rrbb/code/tmp/gauss_keeker/predlog_*.log
+          - /home/rrbb/code/tmp/AT*.log
 #     - type: confsync
 #       paths:
 #           - /shared/conf_sync*.log
 
 outputs:
     - type: file
-      path: /home/rrbb/code/tmp/gauss_keeker/outputs
+      path: /home/rrbb/code/tmp/.keeker/outputs
