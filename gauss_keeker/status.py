@@ -1,50 +1,98 @@
 import os
+import io
+import time
 import yaml
+import pandas as pd
 
 from collections import OrderedDict
 
+# TODO: Should it be splitted into abstract class and child class?
+predpipe_header=['asctime', 'event_label', 'pipeline_id', 'kafka_topic', 'max_latency', 'kafka_start', 'timezone', 'duration', 'timeout', 'expected', 'pushed', 'max_buffer_size', 'now_msg_time', 'loop', 'traceback']
+
 class StatusManager:
     """Store status"""
-    def __init__(self, store_rootpath: str, name: str, logger):
+    def __init__(self, store_rootpath: str, name: str, max_buffer_size=100, timeout=60*5, logger=None):
         self._store_rootpath = store_rootpath
         self._name = name
         self.logger = logger
+        self.max_buffer_size=max_buffer_size
+        self.timeout= timeout
+        self._buffer = []
 
         if not os.path.exists(store_rootpath):
             os.makedirs(store_rootpath, exist_ok=True)
 
-        self._store_path = os.path.join(store_rootpath, name) + '.yml'
+        self._store_path = os.path.join(store_rootpath, name) + '.status'
 
         # Load storage file
+        
         if os.path.exists(self._store_path):
-            self._state_reader = open(self._store_path)
-            self._status = yaml.safe_load(self._state_reader)
+            self.store_time = time.time()
+
         else:
             with open(self._store_path, 'w+') as writer:
-                tmp = dict(name=self._name, empty_sequence=[], states=[])
-                yaml.safe_dump(tmp, writer)
-                self._state_reader = open(self._store_path)
-                self._status = tmp.copy()
+                writer.write('')
+                self.store_time = time.time()
 
-        self._state_writer = None
+    def _read(self) -> dict:
+        with open(self._store_path) as reader:
+            cur_stat = yaml.safe_load(reader)
+
+        return cur_stat
+
+    def _write(self, _buffer) -> None:
+        last_stat = self._read()
+        stat_dict = self._summarize(_buffer, last_stat)
+        self._buffer = []
+
+        stat_dict = cur_stat.update(stat_dict)
+
+        with open(self._store_path, 'w+', encoding='utf8') as writer:
+            yaml.safe_dump(stat_dict, writer)
+
+        self.store_time = time.time()
+        if self.logger:
+            self.logger.info("Stored state")
+        else:
+            print("Stored state")
+
+    def _summarize(self, _buffer: list, last_state: dict) -> dict:
+        buffer_obj = io.StringIO('\n'.join(_buffer))
+        df = pd.read_table(buffer_obj, names=predpipe_header)
+
+        from IPython import embed;embed()
+
+        stat_dict = {}
+
+        # TODO; EMPTYDATA time duration
+        # All emptydata
+        # emptydata-> read -> emptydata
+        #'READ-reading_kafka_msg' 
+        t_df = df[df['event_label'] == 'READ-reading_kafka_msg']
+        if len(t_df) == 0:
+            df.iloc[0].asctime
+
+        #stat_dict['emptydata_duration'] =        
+
+        # TODO: how calculate ? 
+        # TODO: now does it exist kafka_topic?
+        # TODO: when is last poll time?
+        # TODO: average throughput
+        # TODO: latency check
+        raise NotImplementedError
+
+        return stat_dict
 
     def store(self, **kwargs):
+        now = time.time()
+        if len(self._buffer) > self.max_buffer_size or now - self.store_time > self.timeout:
+            self._write(self._buffer)
+
         state_dict = kwargs
-        event_label = state_dict.get('event_label')
+        ordered_values = [state_dict.get(header, 'None') for header in predpipe_header]
+        stat = "\t".join(ordered_values)
+        self._buffer.append(stat)
 
-        # Store
-        self._status['states'].append(state_dict)
-        if event_label == 'EMPTYDATA':
-            self._status['empty_sequence'].append(state_dict['asctime'])
-
-        if self._state_writer is None:
-            self._state_writer = open(self._store_path, 'w')
-
-        # TODO: weird store file. should be changed
-        yaml.safe_dump(self._status, self._state_writer)
-
-        self.logger.info("Stored state")
 
     def close(self):
-        self._state_reader.close()
-        self._state_writer.close()
+        del self._buffer
