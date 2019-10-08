@@ -37,10 +37,16 @@ EMPTYDATA:
 READ-start_read_msg:
     description: "start to read kafka message"
     pattern:
-        - "starting reading Kafka stream at time {timestamp}\\+{timezone} pipeline_id:{pipeline_id}"
+        - "starting reading Kafka stream at time {kafka_start}\\+{timezone} pipeline_id:{pipeline_id}"
 
 READ-reading_kafka_msg:
-    description: "reading kafka message"
+    description: "reading kafka message. poll() - before_poll"
+    pattern: 
+        - "reading more than 1 kafka msg at a time for ML to catch up; poll time: {duration}/{timeout}"
+    extract: True
+
+READ-poll_time:
+    description: "kafka poll time from kafka_reader. line 133"
     pattern: 
       - "kafka poll time: {duration}\\/{timeout}"
     extract: True
@@ -51,6 +57,10 @@ READ-expect_time:
         - "expected-time: {expected}; pushed: {pushed}; max-lat: {max_latency}; now-msg_time: {now_msg_time} pipeline_id:{pipeline_id}"
         - "expected-pred-duration: {expected}; pushed: {pushed}/{max_buffer_size}; eldest: {now_msg_time}/{max_latency}; loops: {loops}"
 
+WRITE-pred_file:
+    description: "Write prediction file to HDFS"
+    pattern:
+        - "moving {pred_tmp} to {pred_store_path} pipeline_id:{pipeline_id}"
 CLOSE-clean_up:
     description: "client clean up"
     pattern: 
