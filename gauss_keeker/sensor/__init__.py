@@ -16,10 +16,10 @@ class ChangeSensor:
     filepath    -- logfile's realpath .
     offset_root -- directory path where offset files located.
                    It comes from config yaml's 'offset_path'.
-    LOGGER      -- for logging
+    logger      -- for logging
     """
     
-    def __init__(self, filepath: str, offset_root: str, LOGGER):
+    def __init__(self, filepath: str, offset_root: str, logger):
         self.target_file = filepath
         self._offset_root = offset_root
         os.makedirs(self._offset_root, exist_ok=True)
@@ -30,7 +30,7 @@ class ChangeSensor:
         self.offset_path = os.path.join(self._offset_root, title) + '.offset'
 
         self._reader = open(self.target_file, 'r')
-        self.logger = LOGGER
+        self.logger = logger
 
         self.find_offset()
 
@@ -82,7 +82,7 @@ class ChangeSensor:
                 self._reader.seek(self.offset)
                 break
             else:
-                # TODO; Cannot parse multi line error logs using regex.
+                # Cannot parse multi line error logs using regex.
                 # Let's replace from '\n' to '>>'
                 self.logger.debug("doesn't matched with log_format %s" % next_text)
                 text += '>>'+next_text
