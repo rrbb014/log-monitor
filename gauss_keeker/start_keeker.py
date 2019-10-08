@@ -8,37 +8,60 @@ import multiprocessing as mp
 import yaml
 import coloredlogs
 
-from sensor import ChangeSensor
-from handler import PredPipeHandler, ConfSyncHandler
-from rule_filter import FilterManager
-from status import StatusManager
+from gauss_keeker.sensor import ChangeSensor
+from gauss_keeker.handler import PredPipeHandler, ConfSyncHandler
+from gauss_keeker.rule_filter import FilterManager
+from gauss_keeker.status import StatusManager
+from gauss_keeker.reporter import FileStatusReporter
 
 
-# TODO: available to multiprocess
 class Keeker:
-    def __init__(self, event_type: str, filepath: str, offset_root: str, status_root: str, LOGGER):
+    def __init__(self, event_type: str, filepath: str, offset_root: str, status_root: str, output_root: str, logger):
         self.target_file = filepath
         self.handler_type = event_type
         self.offset_root = offset_root
         self.status_root = status_root
-        self.logger = LOGGER
+        self.output_root = output_root
+        self.logger = logger
 
     def set_components(self):
         # ChangeSensor
-        self.sensor = ChangeSensor(self.target_file, self.offset_root, LOGGER) 
+        self.sensor = ChangeSensor(
+                filepath=self.target_file,
+                offset_root=self.offset_root,
+                logger=logger
+            ) 
+
         # EventHandler
         if self.handler_type == 'predpipe':
             self.filter = FilterManager().predpipe
-            self.handler = PredPipeHandler(self.filter, logger=self.logger)
+            self.handler = PredPipeHandler(
+                    _filter=self.filter,
+                    logger=self.logger
+                )
         elif self.handler_type == 'confsync':
             self.filter = FilterManager().confsync
-            self.handler = ConfSyncHandler(self.filter, logger=self.logger)
+            self.handler = ConfSyncHandler(
+                    _filter=self.filter,
+                    logger=self.logger
+                )
 
         # StatusManager
         _ , filename = os.path.split(self.target_file)
         title, _ = os.path.splitext(filename)
 
-        self.stat_manager = StatusManager(self.status_root, name=title, logger=self.logger)
+        self.stat_manager = StatusManager(
+                store_rootpath=self.status_root,
+                name=title,
+                logger=self.logger
+            )
+
+        # StatusReporter
+        self.stat_reporter = FileStatusReporter(
+                status_rootpath=self.status_root,
+                output_rootpath=self.output_root,
+                logger=self.logger
+            )
 
     def keek(self):
         is_changed = self.sensor.detect()
@@ -56,6 +79,9 @@ class Keeker:
             # Store event status
             self.stat_manager.store(**data_dict)
 
+            # TODO: Report status
+            #self.stat_reporter.report()
+
         else:
             #time.sleep(60)
             pass
@@ -64,10 +90,25 @@ class Keeker:
         self.sensor.close()
         self.handler.close()
         self.stat_manager.close()
+        self.stat_reporter.close()
 
 
-def work(event_type: str, filepath: str, offset_root: str, status_root: str, LOGGER):
-    keeker = Keeker(event_type, filepath, offset_root, status_root, LOGGER)
+def work(
+        event_type: str,
+        filepath: str,
+        offset_root: str,
+        status_root: str,
+        output_root: str,
+        logger):
+
+    keeker = Keeker(
+            event_type=event_type,
+            filepath=filepath,
+            offset_root=offset_root,
+            status_root=status_root,
+            output_root=output_root,
+            logger=logger)
+
     keeker.set_components()
     retcode = 0
 
@@ -76,10 +117,10 @@ def work(event_type: str, filepath: str, offset_root: str, status_root: str, LOG
             keeker.keek()
 
     except KeyboardInterrupt:
-        LOGGER.warning("receive SIGINT (probably from Docker)")
+        logger.warning("receive SIGINT (probably from Docker)")
         retcode = 3
     except:
-        LOGGER.exception("exception caught at the top level")
+        logger.exception("exception caught at the top level")
         retcode = 1
     finally:
         keeker.close()
@@ -110,18 +151,18 @@ if debug:
 else:
     coloredlogs.install(fmt=log_format, milliseconds=True)
     
-LOGGER = coloredlogs.logging.getLogger()
+logger = coloredlogs.logging.getLogger()
 
 if not os.path.exists(config_yml):
     msg = "There is no %s file." % config_yml
-    LOGGER.error(msg)
+    logger.error(msg)
     exit(1)
 
 # read yml file and extract information for tracking logs
 with open(config_yml) as f:
     conf_dict = yaml.safe_load(f)
     msg = "Found %s file. Loaded." % config_yml
-    LOGGER.info(msg)
+    logger.info(msg)
 
 outputs = conf_dict.get('outputs')
 file_output_path = None
@@ -133,7 +174,7 @@ offset_path = conf_dict.get('offset_path')
 status_path = conf_dict.get('status_path')
 
 if file_output_path is None or offset_path is None or status_path is None:
-    LOGGER.error("Not exist 'offset_path' or 'file output path' or 'status_path' in yaml file")
+    logger.error("Not exist 'offset_path' or 'file output path' or 'status_path' in yaml file")
     exit(1)
 
 # Make directories to store data
@@ -145,12 +186,12 @@ if not os.path.exists(status_path):
     os.makedirs(status_path)
 
 msg = "offset_path: %s\t file_output_path: %s\t status_path: %s" % (offset_path, file_output_path, status_path)
-LOGGER.info(msg)
+logger.info(msg)
 
 # Make target file pool
 inputs = conf_dict.get('inputs')
 if len(inputs) == 0:
-    LOGGER.error("No inputs, Specify inputs in keeker.yml file")
+    logger.error("No inputs, Specify inputs in keeker.yml file")
     exit(1)
     
 target_file_pool = []
@@ -173,14 +214,12 @@ for inp in inputs:
 
 if multi:
     # Multi process version keeker 
-    LOGGER.info("Multi-process execution")
+    logger.info("Multi-process execution")
     workers = []
     for target in target_file_pool:
         event_type, filepath = target
-        workers.append(mp.Process(target=work, args=(event_type, filepath, offset_path, status_path, LOGGER)))
-        LOGGER.info("worker, %s %s %s %s" % (event_type, filepath, offset_path, status_path))
-
-    from IPython import embed;embed()
+        workers.append(mp.Process(target=work, args=(event_type, filepath, offset_path, status_path, file_output_path, logger)))
+        logger.info("worker, %s %s %s %s %s" % (event_type, filepath, offset_path, status_path, file_output_path))
 
     for worker in workers:
         worker.start()
@@ -188,7 +227,7 @@ if multi:
 
 else:
     # Single process version keeker
-    LOGGER.info("Single process execution")
+    logger.info("Single process execution")
     for target in target_file_pool:
         event_type, filepath = target
-        work(event_type, filepath, offset_path, status_path, LOGGER)
+        work(event_type, filepath, offset_path, status_path, file_output_path, logger)
