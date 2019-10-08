@@ -5,7 +5,7 @@ from copy import copy
 
 class RegexRepository:
 
-    def __init__(self):
+    def __init__(self, logger=None):
         self.log_format = "{asctime} - {levelname} - {filename} - {lineno} - {message}"
 
     def check_matched(self, string, pattern):
@@ -36,6 +36,12 @@ class RegexRepository:
 
             return _dict
         except AttributeError:
-            self.logger.exception('AttributeError occured. message: %s, pattern: %s' % (string, pattern))
+            if self.logger:
+                self.logger.exception('AttributeError occured. message: %s, pattern: %s' % (string, pattern))
+            else:
+                print('AttributeError occured. message: %s, pattern: %s' % (string, pattern))
         except:
-            self.logger.exception("Unexpected error occured. Maybe cannot search. message: %s, pattern: " % (string, pattern))
+            if self.logger:
+                self.logger.exception("Unexpected error occured. Maybe cannot search. message: %s, pattern: " % (string, pattern))
+            else:
+                print("Unexpected error occured. Maybe cannot search. message: %s, pattern: " % (string, pattern))
