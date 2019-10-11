@@ -164,14 +164,20 @@ with open(config_yml) as f:
     msg = "Found %s file. Loaded." % config_yml
     logger.info(msg)
 
-outputs = conf_dict.get('outputs')
+outputs = conf_dict.get('output')
 file_output_path = None
 for output in outputs:
     if output['type'] == 'file':
         file_output_path = output.get('path')
 
-offset_path = conf_dict.get('offset_path')
-status_path = conf_dict.get('status_path')
+global_settings = conf_dict.get('global')
+
+if global_settings is None:
+    logger.error("Should specify 'global' in keeker.yml")
+    exit(1)
+
+offset_path = global_settings.get('offset_path')
+status_path = global_settings.get('status_path')
 
 if file_output_path is None or offset_path is None or status_path is None:
     logger.error("Not exist 'offset_path' or 'file output path' or 'status_path' in yaml file")
@@ -189,9 +195,9 @@ msg = "offset_path: %s\t file_output_path: %s\t status_path: %s" % (offset_path,
 logger.info(msg)
 
 # Make target file pool
-inputs = conf_dict.get('inputs')
+inputs = conf_dict.get('input')
 if len(inputs) == 0:
-    logger.error("No inputs, Specify inputs in keeker.yml file")
+    logger.error("No input, Specify input(s) in keeker.yml file")
     exit(1)
     
 target_file_pool = []
