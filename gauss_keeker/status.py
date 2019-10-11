@@ -2,12 +2,32 @@ import os
 import io
 import time
 import yaml
-import pandas as pd
 
-from collections import OrderedDict
+from datetime import datetime
 
 # TODO: Should it be splitted into abstract class and child class?
-predpipe_header=['asctime', 'event_label', 'pipeline_id', 'kafka_topic', 'max_latency', 'kafka_start', 'timezone', 'duration', 'timeout', 'expected', 'pushed', 'max_buffer_size', 'now_msg_time', 'loop', 'traceback']
+predpipe_header=[
+        'asctime',
+        'event_label',
+        'pipeline_id',
+        'kafka_topic',
+        'max_latency',
+        'kafka_start',
+        'timezone',
+        'duration',
+        'timeout',
+        'expected',
+        'pushed',
+        'max_buffer_size',
+        'now_msg_time',
+        'loop',
+        'traceback',
+        'message',
+    ]
+
+def str_to_datetime(string):
+    datetime_obj = datetime.strptime(string, '%Y-%m-%d %H:%M:%S,%f')
+    return datetime_obj
 
 class StatusManager:
     """Store status"""
@@ -45,7 +65,7 @@ class StatusManager:
         stat_dict = self._summarize(_buffer, last_stat)
         self._buffer = []
 
-        stat_dict = cur_stat.update(stat_dict)
+        stat_dict = last_stat.update(stat_dict)
 
         with open(self._store_path, 'w+', encoding='utf8') as writer:
             yaml.safe_dump(stat_dict, writer)
@@ -57,21 +77,52 @@ class StatusManager:
             print("Stored state")
 
     def _summarize(self, _buffer: list, last_state: dict) -> dict:
-        buffer_obj = io.StringIO('\n'.join(_buffer))
-        df = pd.read_table(buffer_obj, names=predpipe_header)
-
-        from IPython import embed;embed()
 
         stat_dict = {}
 
-        # TODO; EMPTYDATA time duration
-        # All emptydata
-        # emptydata-> read -> emptydata
-        #'READ-reading_kafka_msg' 
-        t_df = df[df['event_label'] == 'READ-reading_kafka_msg']
-        if len(t_df) == 0:
-            df.iloc[0].asctime
+        for event in _buffer:
+            if event['event_label'] == "INIT-connect_kafka":
+                stat_dict['kafka_topic'] = event['kafka_topic']
+                stat_dict['kafka_consumer_config'] = event['config']
+                stat_dict['pipeline_id'] = event['pipeline_id']
+                continue
 
+            if event['event_label'] == "INIT-update_component":
+                stat_dict['max_latency'] = event['max_latency']
+                stat_dict['pipeline_id'] = event['pipeline_id']
+                continue
+
+            # available scenario: All emptydata
+            # emptydata-> read -> emptydata
+            if event['event_label'] == "EMPTYDATA":
+                if last_state.get('begin_empty_data', None) is None:
+                    stat_dict['begin_empty_data'] = event['asctime']
+
+                stat_dict['end_empty_data'] = event['asctime']
+                continue
+
+            if event['event_label'] == "READ-reading_kafka_msg":
+                stat_dict['begin_empty_data'] = None
+                stat_dict['end_empty_data'] = None
+
+                poll_duration = stat_dict.get('poll_duration', []) 
+                poll_duration.append(event['duration'])
+                stat_dict['poll_duration'] = poll_duration
+
+                stat_dict['timeout'] = event['timeout']
+                continue
+
+            if event['event_label'] == "READ-poll_time":
+                poll_duration = stat_dict.get('poll_duration', []) 
+                poll_duration.append(event['duration'])
+                stat_dict['poll_duration'] = poll_duration
+                stat_dict['timeout'] = event['timeout']
+
+                    
+
+
+        # TODO; EMPTYDATA time duration
+        #'READ-reading_kafka_msg' 
         #stat_dict['emptydata_duration'] =        
 
         # TODO: how calculate ? 
@@ -87,11 +138,9 @@ class StatusManager:
         now = time.time()
         if len(self._buffer) > self.max_buffer_size or now - self.store_time > self.timeout:
             self._write(self._buffer)
+            return 
 
-        state_dict = kwargs
-        ordered_values = [state_dict.get(header, 'None') for header in predpipe_header]
-        stat = "\t".join(ordered_values)
-        self._buffer.append(stat)
+        self._buffer.append(kwargs)
 
 
     def close(self):
