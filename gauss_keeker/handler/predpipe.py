@@ -78,9 +78,6 @@ class PredPipeHandler(Handler):
 
         copy_dict = parse_dict.copy()
 
-        if event_label != 'NOTFOUND':
-            copy_dict.pop('message')
-
         copy_dict.pop('filename')
         copy_dict.pop('levelname')
         copy_dict.pop('lineno')
