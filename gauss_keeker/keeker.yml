@@ -1,10 +1,12 @@
-# Path for store offsets
-offset_path:  /home/rrbb/code/tmp/.keeker/offsets
+# global settings for keeker 
+#   offset_path => path for store file offsets
+#   status_path => path for store event status 
 
-# Path for store status
-status_path: /home/rrbb/code/tmp/.keeker/status
+global:
+    offset_path:  /home/rrbb/code/tmp/.keeker/offsets
+    status_path: /home/rrbb/code/tmp/.keeker/status
 
-inputs:
+input:
     - type: predpipe
       paths:
           - /home/rrbb/code/tmp/AT*.log
@@ -12,6 +14,11 @@ inputs:
 #       paths:
 #           - /shared/conf_sync*.log
 
-outputs:
+# #filter:
+#     - type: rule
+#       path:
+#       pattern: 
+
+output:
     - type: file
       path: /home/rrbb/code/tmp/.keeker/outputs
