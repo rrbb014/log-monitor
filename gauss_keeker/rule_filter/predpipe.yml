@@ -46,7 +46,7 @@ READ-reading_kafka_msg:
     extract: True
 
 READ-poll_time:
-    description: "kafka poll time from kafka_reader. line 133"
+    description: "randomly printed kafka poll time from kafka_reader. line 133"
     pattern: 
       - "kafka poll time: {duration}\\/{timeout}"
     extract: True
@@ -56,6 +56,11 @@ READ-expect_time:
     pattern:
         - "expected-time: {expected}; pushed: {pushed}; max-lat: {max_latency}; now-msg_time: {now_msg_time} pipeline_id:{pipeline_id}"
         - "expected-pred-duration: {expected}; pushed: {pushed}/{max_buffer_size}; eldest: {now_msg_time}/{max_latency}; loops: {loops}"
+
+READ-pushed:
+    description: ""
+    pattern:
+        - "pushed: {pushed}/{max_buffer_size}; eldest: {now_msg_time}/{max_latency}; loops: {loops}; mem: {memory_count}/{max_input_mem}; expired: {flush}"
 
 WRITE-pred_file:
     description: "Write prediction file to HDFS"
