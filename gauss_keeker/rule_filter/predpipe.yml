@@ -65,7 +65,33 @@ READ-pushed:
 WRITE-pred_file:
     description: "Write prediction file to HDFS"
     pattern:
-        - "moving {pred_tmp} to {pred_store_path} pipeline_id:{pipeline_id}"
+        - "Writing to '{pred_tmp}'. pipeline_id:{pipeline_id} elastic:{elastic} docker_id:{docker_id}"
+        - "writing predictions to {pred_tmp} pipeline_id:{pipeline_id}"
+
+MOVE-pred_file:
+    description: "Move prediction file to HDFS"
+    pattern:
+        - "moving {pred_tmp} to {pred_dir} pipeline_id:{pipeline_id} elastic:{elastic} docker_id:{docker_id}"
+        - "Renaming '{pred_tmp}' to '{pred_dir}'. pipeline_id:{pipeline_id} elastic:{elastic} docker_id:{docker_id}"
+
+COMMIT-offset_partition:
+    description: "Commit to kafka topic's partition"
+    pattern:
+        - "committed partition:offset {kafka_offset} on Kafka pipeline_id:{pipeline_id} elastic:{elastic} docker_id:{docker_id}"
+        - "comitted partition:offset {kafka_offset} on Kafka pipeline_id:{pipeline_id} elastic:{elastic} docker_id:{docker_id}"
+
+PUBLISH-speed:
+    description: "publish speed"
+    pattern:
+        - "publishing speed {speed} for pipeline {pipeline} pipeline_id:{pipeline_id2} elastic:{elastic} docker_id:{docker_id}"
+        - "speed {speed} published for pipeline {pipeline} pipeline_id:{pipeline_id2} elastic:{elastic} docker_id:{docker_id}"
+
+CREATE-ephemeral-speed:
+    description: "create ephemeral node for storing speed"
+    pattern:
+        - "ephemeral {znode_path} created pipeline_id:{pipeline_id} elastic:{elastic} docker_id:{docker_id}"
+        - "creating ephemeral prefixed by {znode_path} pipeline_id:{pipeline_id} elastic:{elastic} docker_id:{docker_id}"
+
 CLOSE-clean_up:
     description: "client clean up"
     pattern: 
@@ -97,7 +123,7 @@ ERROR:
     description: "error situation"
     pattern: 
       - "error in prediction engine>>{traceback}"
-      - "exception caught at the top level pipeline_id:{pipeline_id}>>{traceback}"
+      - "exception caught at the top level pipeline_id:{pipeline_id} {traceback}"
     extract: True
 
 SKIP:
