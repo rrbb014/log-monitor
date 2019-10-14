@@ -7,6 +7,7 @@ class RegexRepository:
 
     def __init__(self, logger=None):
         self.log_format = "{asctime} - {levelname} - {filename} - {lineno} - {message}"
+        self.logger = logger
 
     def check_matched(self, string, pattern):
         regex = re.sub(r'{(.+?)}', r'(?P<_\1>.+)', pattern)
@@ -28,7 +29,7 @@ class RegexRepository:
         # Thanks to url:
         # https://stackoverflow.com/questions/11844986/convert-or-unformat-a-string-to-variables-like-format-but-in-reverse-in-p/11849360#11849360
         try:
-            # TODO: Cannot parse multi-line error log. Because of newline(\n).
+            # Cannot parse multi-line error log. Because of newline(\n).
             regex = re.sub(r'{(.+?)}', r'(?P<_\1>.+)', pattern)
             values = list(re.search(regex, string).groups())
             keys = re.findall(r'{(.+?)}', pattern)
