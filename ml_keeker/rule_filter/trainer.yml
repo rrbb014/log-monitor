@@ -1,0 +1,20 @@
+# EVENT_LABEL-SUB_LABEL:
+#   description: blahblah
+#   pattern: "{abc} - {def}"
+#   extract : True 
+#     - 
+#     - 
+
+start_training:
+    description: "start training"
+    pattern: "decoded a training job model_id={model_id} and engine_id={engine_id}"
+    extract: True
+
+error_training:
+    description: "something error during training"
+    pattern: "Some problem"
+
+done_training:
+    description: "done training"
+    pattern: "uploading content of {tmp_loc} to {hdfs_loc}"
+    extract: True

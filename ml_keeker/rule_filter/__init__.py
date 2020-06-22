@@ -4,7 +4,7 @@ import yaml
 from glob import glob
 
 
-class FilterManager:
+class FilterManager(dict):
     def __init__(self):
         self._filter_dict = {}
         target_path = os.path.join(os.path.dirname(__file__),'*.yml')
@@ -16,10 +16,8 @@ class FilterManager:
 
             self._filter_dict[filter_name] = temp_dict
 
-    @property
-    def predpipe(self):
-        return self._filter_dict.get('predpipe')
+    def __getattr__(self, key):
+        return self._filter_dict[key]
 
-    @property
-    def confsync(self):
-        return self._filter_dict.get('confsync')
+    def __getitem__(self, key):
+        return self._filter_dict[key]

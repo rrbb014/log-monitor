@@ -1,6 +1,17 @@
 import pandas as pd
+from abc import ABCMeta, abstractmethod
 
-from .reporter import StatusReporter
+
+class StatusReporter(metaclass=ABCMeta):
+
+    @abstractmethod
+    def report(self):
+        pass
+
+    @abstractmethod
+    def close(self):
+        pass
+
 
 class FileStatusReporter(StatusReporter):
     def __init__(self, status_rootpath: str, output_rootpath: str, logger):

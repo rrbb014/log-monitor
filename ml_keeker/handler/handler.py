@@ -1,9 +1,17 @@
+from abc import ABCMeta, abstractmethod
+from ml_keeker.common import RegexRepository
 
-from gauss_keeker.common import RegexRepository
-from .handler import Handler
+class Handler(metaclass=ABCMeta):
 
+    @abstractmethod
+    def handle(self):
+        pass
 
-class PredPipeHandler(Handler):
+    @abstractmethod
+    def close(self):
+        pass
+
+class EventHandler(Handler):
 
     def __init__(self, _filter: dict, logger=None):
         self._regex_repo = RegexRepository()
@@ -46,7 +54,7 @@ class PredPipeHandler(Handler):
                 continue
 
             for fmt in patterns:
-                sub_matched = self._regex_repo.check_matched(message, fmt)
+                sub_matched = self._regex_repo.check_matched(message.lower(), fmt.lower())
                 temp_list.append(sub_matched)
 
             matched = any(temp_list)
@@ -65,7 +73,7 @@ class PredPipeHandler(Handler):
         elif cnt > 1:
             raise Exception("2 more matched event label. labels: %s message: %s" % (' '.join(event_label), message))
         else:
-            self.logger.warning("No matched label. Check filter pattern. message: %s" % message)
+            self.logger.debug("No matched label. Check filter pattern. message: %s" % message)
             return 'NOTFOUND'
 
     def handle(self, text) -> dict :
@@ -78,9 +86,6 @@ class PredPipeHandler(Handler):
 
         copy_dict = parse_dict.copy()
 
-        copy_dict.pop('filename')
-        copy_dict.pop('levelname')
-        copy_dict.pop('lineno')
 
         tmp_label =  self._filter.get(event_label, False)
         if tmp_label:

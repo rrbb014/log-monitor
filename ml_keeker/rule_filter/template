@@ -1,0 +1,6 @@
+# EVENT_LABEL-SUB_LABEL:
+#   description: blahblah
+#   pattern: "{abc} - {def}"
+#   extract : True 
+#     - 
+#     - 

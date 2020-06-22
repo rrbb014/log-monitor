@@ -18,14 +18,21 @@ INIT-print_args:
 INIT-connect_kafka: 
     description: "connecting to kafka topic"
     pattern: 
+      - "connecting to topic {kafka_topic} with config {config}"
       - "connecting to topic {kafka_topic} with config {config} pipeline_id:{pipeline_id}"
     extract: True
 
 INIT-update_component:
     description: "update processing component"
     pattern: 
+      - "updating processing components with max-latency {max_latency}"
       - "updating processing components with max-latency {max_latency} pipeline_id:{pipeline_id}"
     extract: True
+
+INIT-model_spec:
+    description: "running model spec"
+    pattern: 
+      - "running model of type {model_type} created at {time}"
 
 EMPTYDATA: 
     description: "empty data from kafka topic"
@@ -33,6 +40,7 @@ EMPTYDATA:
         - "empty data or no data pipeline_id:{pipeline_id}"
         - "empty data or no data"
         - "empty data"
+        - "more than 45 minutes without data"
 
 READ-start_read_msg:
     description: "start to read kafka message"
@@ -42,7 +50,18 @@ READ-start_read_msg:
 READ-reading_kafka_msg:
     description: "reading kafka message. poll() - before_poll"
     pattern: 
-        - "reading more than 1 kafka msg at a time for ML to catch up; poll time: {duration}/{timeout}"
+        - "reading more than 1 Kafka msg at a time for ML to catch up; poll time: {duration}/{timeout}"
+    extract: True
+
+READ-finish_to_read:
+    description: "finish to read messages"
+    pattern: 
+        - "worker just read {row_num} rows out of total: {all_row_num}"
+
+READ-large_delay:
+    description: "catching up message"
+    pattern: 
+      - "large delay of {minute} minutes. Keep buffering to catch up faster"
     extract: True
 
 READ-poll_time:
@@ -67,16 +86,20 @@ WRITE-pred_file:
     pattern:
         - "Writing to '{pred_tmp}'. pipeline_id:{pipeline_id} elastic:{elastic} docker_id:{docker_id}"
         - "writing predictions to {pred_tmp} pipeline_id:{pipeline_id}"
+        - "writing {num_predicion} predictions to {pred_tmp}"
 
 MOVE-pred_file:
     description: "Move prediction file to HDFS"
     pattern:
+        - "moving {pred_tmp} to {pred_dir}"
         - "moving {pred_tmp} to {pred_dir} pipeline_id:{pipeline_id} elastic:{elastic} docker_id:{docker_id}"
         - "Renaming '{pred_tmp}' to '{pred_dir}'. pipeline_id:{pipeline_id} elastic:{elastic} docker_id:{docker_id}"
 
 COMMIT-offset_partition:
     description: "Commit to kafka topic's partition"
     pattern:
+        - "comitted Kafka offsets on partitions {partition_idx}"
+        - "committed Kafka offsets on partitions {partition_idx}"
         - "committed partition:offset {kafka_offset} on Kafka pipeline_id:{pipeline_id} elastic:{elastic} docker_id:{docker_id}"
         - "comitted partition:offset {kafka_offset} on Kafka pipeline_id:{pipeline_id} elastic:{elastic} docker_id:{docker_id}"
 
@@ -113,11 +136,19 @@ RESTART:
     pattern: 
       - "all services are closed. Ready to exit and restart."
       - "all services are closed. Ready to exit and restart. pipeline_id:{pipeline_id}"
+      - "receive SIGINT (probably from Docker)"
 
 TIMEOUT-no_data:
     description: "TimeoutError from process.py"
     pattern:
         - "more than {timeout} minutes without data pipeline_id:{pipeline_id}"
+
+WARNING:
+    description: "warning situation"
+    pattern: 
+      - "column {column_name} has inf value. Changed to NaN"
+      - "column {column_name} has {percentage}% NaN. Changed to 0"
+      - "exception caught at the top level pipeline_id:{pipeline_id} {traceback}"
 
 ERROR:
     description: "error situation"
@@ -128,4 +159,6 @@ ERROR:
 
 SKIP:
     description: "skippable log event"
-    pattern: []
+    pattern: 
+      - "healthcheck: off"
+      - "No feedback has been given"

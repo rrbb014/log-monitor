@@ -3,22 +3,22 @@
 #   status_path => path for store event status 
 
 global:
-    offset_path:  /home/rrbb/code/tmp/.keeker/offsets
-    status_path: /home/rrbb/code/tmp/.keeker/status
+    offset_path:  /data/ml/docker_volume/.keeker/offsets
+    status_path: /data/ml/docker_volume/.keeker/status
 
 input:
     - type: predpipe
       paths:
-          - /home/rrbb/code/tmp/AT*.log
+          - /code/test/keeker/engine*.log
 #     - type: confsync
 #       paths:
 #           - /shared/conf_sync*.log
 
-# #filter:
+# filter:
 #     - type: rule
 #       path:
 #       pattern: 
 
 output:
     - type: file
-      path: /home/rrbb/code/tmp/.keeker/outputs
+      path: /data/ml/docker_volume/.keeker

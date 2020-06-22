@@ -1,0 +1,14 @@
+start_engine:
+    description: "start prediction"
+    pattern: 
+        - "start logging"
+
+stop_engine:
+    description: "stop prediction"
+    pattern: 
+        - "received SIGINT (probably from Docker)"
+        - "all services are closed. Ready to exit and restart"
+
+skippable:
+    pattern: 
+        - "empty data or no data"

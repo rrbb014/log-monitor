@@ -8,21 +8,31 @@ import multiprocessing as mp
 import yaml
 import coloredlogs
 
-from gauss_keeker.sensor import ChangeSensor
-from gauss_keeker.handler import PredPipeHandler, ConfSyncHandler
-from gauss_keeker.rule_filter import FilterManager
-from gauss_keeker.status import StatusManager
-from gauss_keeker.reporter import FileStatusReporter
+from ml_keeker.sensor import ChangeSensor
+from ml_keeker.handler import PredPipeHandler, ConfSyncHandler
+from ml_keeker.rule_filter import FilterManager
+from ml_keeker.status import StatusManager
+from ml_keeker.reporter import FileStatusReporter
 
 
 class Keeker:
-    def __init__(self, event_type: str, filepath: str, offset_root: str, status_root: str, output_root: str, logger):
+    def __init__(
+            self,
+            event_type: str,
+            filepath: str,
+            offset_root: str,
+            status_root: str,
+            output_root: str,
+            logger):
+
         self.target_file = filepath
         self.handler_type = event_type
         self.offset_root = offset_root
         self.status_root = status_root
         self.output_root = output_root
         self.logger = logger
+
+        self.set_components()
 
     def set_components(self):
         # ChangeSensor
@@ -71,10 +81,10 @@ class Keeker:
         if is_changed:
             # read line from ChangeSensor
             text, next_offset = self.sensor.read()
+            self.sensor.commit(next_offset)
 
             # Classify log event
             data_dict = self.handler.handle(text)
-            self.sensor.commit(next_offset)
 
             # Store event status
             self.stat_manager.store(**data_dict)
@@ -112,8 +122,16 @@ def work(
     keeker.set_components()
     retcode = 0
 
+    start_keeking = time.time()
+    rest_time = 60 * 10    # 10 min
+
     try:
         while True:
+            if time.time() - start_keeking >= rest_time:
+                logger.info("Take a rest")
+                time.sleep(60)
+                start_keeking = time.time()
+
             keeker.keek()
 
     except KeyboardInterrupt:
@@ -135,7 +153,7 @@ def work(
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-f', '--file', default='keeker.yml', help='config yaml file')
+parser.add_argument('-f', '--file', default='keeker_setting.yml', help='config yaml file')
 parser.add_argument('--multi', action='store_true', help="Whether single or multi process")
 parser.add_argument('--debug', action='store_true', help='Set logger level as DEBUG')
 

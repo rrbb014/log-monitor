@@ -44,9 +44,9 @@ files = find_data_files('yml')
 
 
 setup(
-    name='gauss_keeker',
+    name='ml_keeker',
     version='1.0',
-    description='Gauss ML Log event handler',
+    description='Gauss ML Log event monitor',
     author='Minseo Gong',
     author_email='gutssoul1@gmail.com',
     packages=find_packages(),

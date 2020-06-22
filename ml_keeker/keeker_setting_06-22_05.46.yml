@@ -1,0 +1,10 @@
+global:
+  offset_path: /data/ml/docker_volume/offsets
+  output_path: /data/ml/docker_volume/outputs
+  status_path: /data/ml/docker_volume/status
+input:
+- paths: /data/ml/docker_volume/engine*.log
+  type: pred_engine
+- paths: /data/ml/docker_volume/trainer.log
+  type: trainer
+output: []

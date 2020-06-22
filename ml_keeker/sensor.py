@@ -1,6 +1,7 @@
 import os
+import random
 
-from gauss_keeker.common import RegexRepository
+from ml_keeker.common import RegexRepository
 
 
 class ChangeSensor:
@@ -44,16 +45,21 @@ class ChangeSensor:
 
         with open(self.offset_path) as f:
             content = f.read().strip()
-            self.offset = int(content) if content != '' else 0
+            offset_value = int(content) if content != '' else 0
+
+            self.offset = offset_value
+            self.private_offset = offset_value
             return self.offset
 
     def detect(self):
         """Detect target log file's change"""
         last_offset = self._reader.seek(0, 2)
-        self._reader.seek(self.offset)
+        self._reader.seek(self.private_offset)
 
-        if self.offset < last_offset:
-            self.logger.info("Change is detected! - file: %s" % self.target_file)
+        if self.private_offset < last_offset:
+            trial = random.random()
+            if trial <= 0.0001:
+                self.logger.info("Change is detected! - file: %s" % self.target_file)
             return True
         else:
             # TODO: If file is reset, should be handle
@@ -65,7 +71,7 @@ class ChangeSensor:
 
         last_offset = self._reader.seek(0, 2)
 
-        self._reader.seek(self.offset)
+        self._reader.seek(self.private_offset)
         text = self._reader.readline().strip()
         next_offset = self._reader.tell()
 
@@ -77,6 +83,7 @@ class ChangeSensor:
             next_text = self._reader.readline().strip()
             self.logger.debug('next_text: %s' % next_text)
             next_next_offset = self._reader.tell()
+            # Checking next line text matched log format
             if regex_repo.check_matched(next_text, regex_repo.log_format):
                 # when commit() called, offset will changed
                 self._reader.seek(self.offset)
@@ -89,13 +96,21 @@ class ChangeSensor:
                 next_offset = next_next_offset
 
         self.logger.debug('text : %s' % text)
-        return text, next_offset
+        eof = True if next_offset == last_offset else False
+        return text, next_offset, eof
     
-    def commit(self, offset):
-        with open(self.offset_path, 'w') as f:
-            f.write(str(offset))
-        self.offset = self.find_offset()
-        self.logger.info("Committed offset: %d - file: %s" % (self.offset, self.target_file))
+    def commit(self, offset=None, private_offset=None):
+        if offset is None:
+            if private_offset is not None:
+                self.private_offset = private_offset
+
+        else:
+            with open(self.offset_path, 'w') as f:
+                f.write(str(offset))
+            self.offset = self.find_offset()
+            self.logger.info("Committed offset: %d - file: %s" % (self.offset, self.target_file))
+            self.private_offset = self.offset
 
     def close(self):
         self._reader.close()
+        self.private_offset = self.offset
